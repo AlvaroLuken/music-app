@@ -82,6 +82,10 @@ export type ChordLyricSegment = {
   lyric: string;
 };
 
+export function preserveLyricSpacing(lyric: string) {
+  return (lyric || "\u00a0").replace(/ /g, "\u00a0");
+}
+
 export function parseChordProLine(line: string): ChordLyricSegment[] {
   const segments: ChordLyricSegment[] = [];
   let cursor = 0;

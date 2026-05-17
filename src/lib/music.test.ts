@@ -3,6 +3,7 @@ import {
   centsOff,
   frequencyToNote,
   parseChordProLine,
+  preserveLyricSpacing,
   simplifyChord,
   transposeChord,
   transposeChart,
@@ -27,6 +28,12 @@ describe("chord-pro parsing", () => {
       { chord: "C", lyric: " " },
       { chord: "D", lyric: "" },
     ]);
+  });
+
+  it("keeps boundary spaces visible when rendered as separate chord segments", () => {
+    expect(preserveLyricSpacing("I once was ")).toBe("I\u00a0once\u00a0was\u00a0");
+    expect(preserveLyricSpacing(" ")).toBe("\u00a0");
+    expect(preserveLyricSpacing("")).toBe("\u00a0");
   });
 });
 

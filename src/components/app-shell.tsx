@@ -3,7 +3,7 @@
 import { Music, Search, SlidersHorizontal, Star, Tally5, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { diagramFor } from "@/lib/chord-diagrams";
-import { extractChords, parseChordProLine, simplifyChart, transposeChart } from "@/lib/music";
+import { extractChords, parseChordProLine, preserveLyricSpacing, simplifyChart, transposeChart } from "@/lib/music";
 import { searchSongs, songs, type Song } from "@/lib/songs";
 import { Tuner } from "./tuner";
 import { ThemeToggle } from "./theme-toggle";
@@ -83,7 +83,7 @@ function ChordLine({ line }: { line: string }) {
           <span className="h-[1.25em] font-sans text-sm leading-none">
             {segment.chord ? <ChordToken chord={segment.chord} /> : null}
           </span>
-          <span className="leading-[1.85]">{segment.lyric || "\u00a0"}</span>
+          <span className="leading-[1.85]">{preserveLyricSpacing(segment.lyric)}</span>
         </span>
       ))}
     </div>

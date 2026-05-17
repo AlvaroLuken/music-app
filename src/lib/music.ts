@@ -77,6 +77,40 @@ export function noteFrequency(note: string, octave: number) {
   return 440 * 2 ** ((midi - 69) / 12);
 }
 
+export type ChordLyricSegment = {
+  chord?: string;
+  lyric: string;
+};
+
+export function parseChordProLine(line: string): ChordLyricSegment[] {
+  const segments: ChordLyricSegment[] = [];
+  let cursor = 0;
+  let pendingChord: string | undefined;
+
+  for (const match of Array.from(line.matchAll(/\[([^\]]+)]/g))) {
+    const chordStart = match.index ?? 0;
+    const lyricBeforeChord = line.slice(cursor, chordStart);
+
+    if (pendingChord !== undefined) {
+      segments.push({ chord: pendingChord, lyric: lyricBeforeChord });
+    } else if (lyricBeforeChord) {
+      segments.push({ lyric: lyricBeforeChord });
+    }
+
+    pendingChord = match[1];
+    cursor = chordStart + match[0].length;
+  }
+
+  const trailingLyric = line.slice(cursor);
+  if (pendingChord !== undefined) {
+    segments.push({ chord: pendingChord, lyric: trailingLyric });
+  } else if (trailingLyric || segments.length === 0) {
+    segments.push({ lyric: trailingLyric });
+  }
+
+  return segments;
+}
+
 export function extractChords(chart: string) {
   return Array.from(new Set(Array.from(chart.matchAll(/\[([^\]]+)]/g), (match) => match[1])));
 }

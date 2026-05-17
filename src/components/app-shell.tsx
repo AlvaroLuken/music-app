@@ -3,7 +3,7 @@
 import { Music, Search, SlidersHorizontal, Star, Tally5, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { diagramFor } from "@/lib/chord-diagrams";
-import { extractChords, simplifyChart, transposeChart } from "@/lib/music";
+import { extractChords, parseChordProLine, simplifyChart, transposeChart } from "@/lib/music";
 import { searchSongs, songs, type Song } from "@/lib/songs";
 import { Tuner } from "./tuner";
 import { ThemeToggle } from "./theme-toggle";
@@ -73,31 +73,54 @@ function ChordGrid({ frets }: { frets: string }) {
   );
 }
 
+function ChordLine({ line }: { line: string }) {
+  const segments = parseChordProLine(line);
+
+  return (
+    <div className="min-h-[3.2em] whitespace-nowrap leading-none">
+      {segments.map((segment, index) => (
+        <span key={`${segment.chord ?? "lyric"}-${index}`} className="inline-flex min-h-[3.1em] flex-col justify-end align-bottom">
+          <span className="h-[1.25em] font-sans text-sm leading-none">
+            {segment.chord ? <ChordToken chord={segment.chord} /> : null}
+          </span>
+          <span className="leading-[1.85]">{segment.lyric || "\u00a0"}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Chart({ song, transpose, simplified, fontSize }: { song: Song; transpose: number; simplified: boolean; fontSize: number }) {
   const chartRef = useRef<HTMLDivElement>(null);
-  const source = song.sections
-    .map((section) => `## ${section.name}\n${section.chart}`)
-    .join("\n\n");
-  const chart = simplified ? simplifyChart(transposeChart(source, transpose)) : transposeChart(source, transpose);
-  const parts = chart.split(/(\[[^\]]+])/g);
+  const transformedSections = song.sections.map((section) => {
+    const transposed = transposeChart(section.chart, transpose);
+    return {
+      ...section,
+      chart: simplified ? simplifyChart(transposed) : transposed,
+    };
+  });
+  const fullChart = transformedSections.map((section) => section.chart).join("\n");
 
   return (
     <div ref={chartRef} className="rounded-[2rem] border border-white/10 bg-stone-900/80 p-5 shadow-2xl shadow-black/20 md:p-8">
       <div className="mb-6 flex flex-wrap gap-2">
-        {extractChords(chart).map((chord) => (
+        {extractChords(fullChart).map((chord) => (
           <span key={chord} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 font-mono text-sm text-amber-200">
             {chord}
           </span>
         ))}
       </div>
-      <div className="whitespace-pre-wrap font-mono leading-[2.35] text-stone-100" style={{ fontSize }}>
-        {parts.map((part, index) => {
-          if (part.startsWith("## ")) {
-            return <h3 key={index} className="mt-6 font-sans text-sm uppercase tracking-[0.3em] text-stone-500">{part.replace("## ", "")}</h3>;
-          }
-          if (part.startsWith("[") && part.endsWith("]")) return <ChordToken key={`${part}-${index}`} chord={part.slice(1, -1)} />;
-          return <span key={index}>{part}</span>;
-        })}
+      <div className="overflow-x-auto pb-2">
+        <div className="min-w-max space-y-6 font-mono text-stone-100" style={{ fontSize }}>
+          {transformedSections.map((section) => (
+            <section key={section.name} className="space-y-1">
+              <h3 className="font-sans text-sm uppercase tracking-[0.3em] text-stone-500">{section.name}</h3>
+              <div className="space-y-1">
+                {section.chart.split("\n").map((line, index) => <ChordLine key={`${section.name}-${index}`} line={line} />)}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -2,10 +2,33 @@ import { describe, expect, it } from "vitest";
 import {
   centsOff,
   frequencyToNote,
+  parseChordProLine,
   simplifyChord,
   transposeChord,
   transposeChart,
 } from "./music";
+
+describe("chord-pro parsing", () => {
+  it("places each chord above the lyric segment where it enters", () => {
+    expect(parseChordProLine("[Am]There is a [C]house in [D]New Orleans")).toEqual([
+      { chord: "Am", lyric: "There is a " },
+      { chord: "C", lyric: "house in " },
+      { chord: "D", lyric: "New Orleans" },
+    ]);
+  });
+
+  it("preserves leading lyrics and chord-only runs", () => {
+    expect(parseChordProLine("That saved a soul like [D]me")).toEqual([
+      { lyric: "That saved a soul like " },
+      { chord: "D", lyric: "me" },
+    ]);
+    expect(parseChordProLine("[Am] [C] [D]")).toEqual([
+      { chord: "Am", lyric: " " },
+      { chord: "C", lyric: " " },
+      { chord: "D", lyric: "" },
+    ]);
+  });
+});
 
 describe("chord transposition", () => {
   it("transposes plain, sharp, flat, slash, and extended chords", () => {

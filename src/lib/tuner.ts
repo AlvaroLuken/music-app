@@ -1,3 +1,5 @@
+import { centsOff } from "./music";
+
 export type InstrumentPreset = {
   id: "chromatic" | "guitar" | "bass";
   name: string;
@@ -88,4 +90,21 @@ export function nearestString(frequency: number, preset: InstrumentPreset) {
   return preset.strings.reduce((nearest, current) =>
     Math.abs(current.frequency - frequency) < Math.abs(nearest.frequency - frequency) ? current : nearest,
   );
+}
+
+export function resolveInstrumentFrequency(frequency: number, preset: InstrumentPreset) {
+  if (preset.id !== "bass" || !preset.strings.length) return frequency;
+
+  const harmonicDivisors = [1, 2, 3, 4];
+  let best: { frequency: number; cents: number } | null = null;
+
+  for (const divisor of harmonicDivisors) {
+    const candidate = frequency / divisor;
+    for (const string of preset.strings) {
+      const cents = Math.abs(centsOff(candidate, string.frequency));
+      if (!best || cents < best.cents) best = { frequency: candidate, cents };
+    }
+  }
+
+  return best && best.cents <= 45 ? best.frequency : frequency;
 }

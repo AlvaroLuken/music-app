@@ -3,7 +3,7 @@
 import { Mic, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { centsOff, frequencyToNote } from "@/lib/music";
-import { autoCorrelate, INSTRUMENT_PRESETS } from "@/lib/tuner";
+import { autoCorrelate, INSTRUMENT_PRESETS, resolveInstrumentFrequency } from "@/lib/tuner";
 
 type TunerProps = {
   presetId: "guitar" | "bass";
@@ -60,7 +60,8 @@ export function Tuner({ presetId }: TunerProps) {
       }
       const audio = new AudioContext();
       const analyser = audio.createAnalyser();
-      analyser.fftSize = 4096;
+      analyser.fftSize = presetId === "bass" ? 16384 : 4096;
+      analyser.smoothingTimeConstant = presetId === "bass" ? 0.2 : 0.8;
       audio.createMediaStreamSource(stream).connect(analyser);
       if (!mountedRef.current || requestId !== requestIdRef.current) {
         stream.getTracks().forEach((track) => track.stop());
@@ -93,14 +94,17 @@ export function Tuner({ presetId }: TunerProps) {
       if (!analyser || !audio) return;
       analyser.getFloatTimeDomainData(buffer);
       const detected = autoCorrelate(buffer, audio.sampleRate);
-      if (detected && detected >= preset.range[0] && detected <= preset.range[1]) setFrequency(detected);
+      if (detected) {
+        const resolved = resolveInstrumentFrequency(detected, preset);
+        if (resolved >= preset.range[0] && resolved <= preset.range[1]) setFrequency(resolved);
+      }
       frameRef.current = requestAnimationFrame(tick);
     };
     frameRef.current = requestAnimationFrame(tick);
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [running, preset.range]);
+  }, [running, preset]);
 
   useEffect(() => {
     mountedRef.current = true;

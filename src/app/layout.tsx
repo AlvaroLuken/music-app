@@ -6,8 +6,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Music App — Chords and Tuner",
-  description: "A fast, ad-free chord viewer and guitar/bass tuner for musicians.",
+  title: "Plain Tuner — Online Guitar and Bass Tuner",
+  description: "A fast, ad-free online tuner for guitar, bass, and chromatic pitch detection.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
